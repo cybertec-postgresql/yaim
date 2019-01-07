@@ -1,0 +1,17 @@
+# time (in milliseconds) after which pgbouncer_man wakes up and checks if any clusters or databases have changed.
+interval: 5000
+ttl: 7000
+
+# etcd or consul endpoint or list of endpoints.
+endpoints:
+  - http://127.0.0.1:2379
+  - http://192.168.0.48:2379
+# username that can be used to access the key in etcd.
+etcd_user: "patroni"
+etcd_password: "UpiU178oURwaK4RQ7Gw"
+# the etcd or consul directory that contains all patroni instances that the pgbouncer shall manage.
+service: "/service/"
+
+# a user that can access the "postgres" database on all clusters and is able to use SELECT on pg_stat_database table.
+db_user: "replicator"
+db_password: "HhS5qq8cqHC8gPJPSuA"
