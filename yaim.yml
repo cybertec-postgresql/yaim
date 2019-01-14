@@ -2,6 +2,10 @@
 interval: 5000
 ttl: 7000
 
+#How often to retry reaching pgbouncer for the healthiness check and after how many milliseconds to retry again.
+retry_num: 3
+retry_after: 250
+
 # etcd or consul endpoint or list of endpoints.
 endpoints:
   - http://127.0.0.1:2379
@@ -9,9 +13,15 @@ endpoints:
 # username that can be used to access the key in etcd.
 etcd_user: "patroni"
 etcd_password: "UpiU178oURwaK4RQ7Gw"
-# the etcd or consul directory that contains all patroni instances that the pgbouncer shall manage.
-service: "/service/"
+# the etcd or consul directory where the ip addresses will be registered, marked and the yaim node health will be advertised
+service: "/yaim_service/"
 
-# a user that can access the "postgres" database on all clusters and is able to use SELECT on pg_stat_database table.
-db_user: "replicator"
-db_password: "HhS5qq8cqHC8gPJPSuA"
+# where postgres or pgbouncer can be reached. Must be on this host, as the virtual ip-addresses will be registered to this host.
+pgbouncer_address: 127.0.0.1
+pgbouncer_port: 6432
+pgbouncer_user: "postgres"
+pgbouncer_password: ""
+# the database against which a liveliness-check will be carried out
+pgbouncer_database: "pgbouncer"
+
+db_options: "?sslmode=disable"

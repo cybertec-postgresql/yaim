@@ -9,7 +9,9 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"errors"
+	"flag"
 	"fmt"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
@@ -20,13 +22,21 @@ import (
 	"strings"
 	"time"
 
+	_ "github.com/lib/pq"
+
 	"go.etcd.io/etcd/client"
 )
+
+var configFile = flag.String("config", "./yaim.yml", "Location of the configuration file.")
+var versionHint = flag.Bool("version", false, "Show the version number.")
 
 //start all fields uppercase so yaml package can access them
 type conf struct {
 	Interval uint64 `yaml:interval` //milliseconds
 	TTL      uint64 `yaml:interval` //milliseconds - should be at least 2*RTT greater than Interval (once to retrieve marked IPs, once to refresh all marks.).
+
+	Retry_after int `yaml:retry_after`
+	Retry_num   int `yaml:retry_num`
 
 	Endpoints     []string `yaml:enpoints`
 	Etcd_user     string   `yaml:etcd_user`
@@ -34,13 +44,15 @@ type conf struct {
 
 	Service string `yaml:service`
 
-	Db_port     int    `yaml:db_port`
-	Db_user     string `yaml:db_user`
-	Db_password string `yaml:db_password`
+	Pgbouncer_address  string `yaml:pgbouncer_address`
+	Pgbouncer_port     string `yaml:pgbouncer_port`
+	Pgbouncer_database string `yaml:pgbouncer_database`
+	Pgbouncer_user     string `yaml:pgbouncer_user`
+	Pgbouncer_password string `yaml:pgbouncer_password`
+	Db_options         string `yaml:db_options`
 }
 
 var c *conf
-var ctx context.Context
 var kapi client.KeysAPI
 
 var getOpts *client.GetOptions
@@ -52,9 +64,16 @@ var dirSetOpts *client.SetOptions
 var nodeName string
 
 func main() {
+	flag.Parse()
+
+	if *versionHint == true {
+		fmt.Println("version 0.1")
+		return
+	}
+
 	c = new(conf)
 
-	yamlFile, yamlErr := ioutil.ReadFile("yaim.yml")
+	yamlFile, yamlErr := ioutil.ReadFile(*configFile)
 	if yamlErr != nil {
 		log.Fatal("couldn't open config File!", yamlErr)
 	}
@@ -104,19 +123,16 @@ func main() {
 		PrevExist: client.PrevIgnore,
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
-	defer cancel()
-
-	_, dirErr := kapi.Get(ctx, c.Service+"nodes", getOpts)
+	_, dirErr := kapi.Get(context.Background(), c.Service+"nodes", getOpts)
 	if dirErr != nil {
-		_, dirErr = kapi.Set(ctx, c.Service+"nodes", "", dirSetOpts)
+		_, dirErr = kapi.Set(context.Background(), c.Service+"nodes", "", dirSetOpts)
 		if dirErr != nil {
 			log.Fatal("couldn't create nodes dir in etcd.", dirErr)
 		}
 	}
-	_, dirErr = kapi.Get(ctx, c.Service+"ips", getOpts)
+	_, dirErr = kapi.Get(context.Background(), c.Service+"ips", getOpts)
 	if dirErr != nil {
-		_, dirErr = kapi.Set(ctx, c.Service+"ips", "", dirSetOpts)
+		_, dirErr = kapi.Set(context.Background(), c.Service+"ips", "", dirSetOpts)
 		if dirErr != nil {
 			log.Fatal("couldn't create ips dir in etcd.", dirErr)
 		}
@@ -129,7 +145,25 @@ func ipMan() {
 	for {
 		time.Sleep(time.Duration(c.Interval) * time.Millisecond)
 		fmt.Println("loop!")
-		if isHealthy() == true {
+
+		var err error
+		var healthy bool
+		for i := 0; i < c.Retry_num; i++ {
+			healthy, err = isHealthy()
+			if err != nil {
+				log.Printf("encountered an error while determining health status.\n")
+				log.Print(err)
+			} else {
+				break
+			}
+			time.Sleep(time.Duration(c.Retry_after) * time.Millisecond)
+		}
+		if err != nil {
+			log.Print("too many retries")
+		}
+
+		if healthy == true {
+			log.Print("Node is healthy.")
 			advertiseInDCS()
 			numAdv, err := getNumberAdvertisments()
 			if err != nil {
@@ -181,6 +215,7 @@ func ipMan() {
 				//try to mark the randomly select IP. True means we where successful in setting the etcd key.
 				if markIpInDCS(ip) {
 					//use register the address to our machine.
+					//TODO
 					takeIp()
 				}
 
@@ -191,11 +226,31 @@ func ipMan() {
 	}
 }
 
-func isHealthy() (success bool) {
-	return true
+func isHealthy() (success bool, err error) {
+	connstr := "postgres://" + c.Pgbouncer_user + ":" + c.Pgbouncer_password
+	connstr += "@" + c.Pgbouncer_address + ":" + c.Pgbouncer_port
+	connstr += "/" + c.Pgbouncer_database + c.Db_options
+
+	db, dbErr := sql.Open("postgres", connstr)
+
+	if dbErr != nil {
+		return false, dbErr
+	}
+	defer db.Close()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+	defer cancel()
+
+	dbErr = db.PingContext(ctx)
+	if dbErr != nil {
+		return false, dbErr
+	} else {
+		return true, nil
+	}
 }
 
 func takeIp() {
+	//TODO
 	return
 }
 
@@ -218,7 +273,7 @@ func markIpInDCS(ip string) (success bool) {
 	if err != nil {
 		log.Print("Error in markIpInDCS() :", err)
 		return false
-	}else{
+	} else {
 		log.Print("marked IP in etcd: ", ip)
 	}
 	return true
@@ -235,7 +290,7 @@ func refreshMarkIpInDCS(ip string) {
 	_, err := kapi.Set(context.Background(), c.Service+"ips/"+ip+"/marked", "", opts)
 	if err != nil {
 		log.Print("Error in refreshMarkIpInDCS() :", err)
-	}else{
+	} else {
 		log.Print("refreshed marked IP in etcd: ", ip)
 	}
 }
