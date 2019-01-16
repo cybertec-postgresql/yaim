@@ -1,0 +1,18 @@
+[Unit]
+Description=yaim Startup process
+After=network-online.target
+
+[Service]
+Type=simple
+
+User=pgbouncer
+Group=pgbouncer
+
+Config=/etc/yaim.yml
+
+ExecStart=/usr/local/bin/yaim -config $Config
+
+ExecStop=/bin/kill -s QUIT $MAINPID
+
+[Install]
+WantedBy=default.target

@@ -1,0 +1,28 @@
+# nfpm example config file
+name: "yaim"
+arch: "amd64"
+platform: "linux"
+version: "v0.1"
+section: "default"
+priority: "extra"
+provides:
+- yaim
+maintainer: "Julian Markwort <julian.markwort@cybertec.at>"
+description: |
+  yaim - yet another ip manager
+   yaim will check the healthiness of a specific postgresql
+   or pgbouncer server. If the node is healthy, this information
+   is published in etcd and all yaim registered in the same
+   service directory will race to take on virtual IP addresses.
+   All IP addresses specified in etcd will always lead to one of
+   the nodes, so this concept can be easily used together with
+   round robin DNS load balancing.
+vendor: "Cybertec"
+homepage: "http://www.cybertec.at/"
+license: "BSD 3"
+bindir: "/usr/local/bin"
+files:
+  ./yaim: "/usr/local/bin/yaim"
+  ./yaim.service: "/lib/systemd/system/yaim.service"
+config_files:
+  ./yaim.yml: "/etc/yaim.yml"

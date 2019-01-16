@@ -1,6 +1,6 @@
 # yaim
 yaim - yet another ip manager
-
+yaim will check the healthiness of a specific postgresql or pgbouncer server. If the node is healthy, this information is published in etcd and all yaim registered in the same service directory will race to take on virtual IP addresses. All IP addresses specified in etcd will always lead to one of the nodes, so this concept can be easily used together with round robin DNS load balancing.
 
 ## design
 A running instance of this program will be referred to as a _node_.
