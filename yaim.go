@@ -81,8 +81,8 @@ func main() {
 	if yamlErr != nil {
 		log.Fatalf("Unmarshal: %v", yamlErr)
 	}
-	fmt.Println("read config:")
-	fmt.Println(*c)
+	//fmt.Println("read config:")
+	//fmt.Println(*c)
 
 	name, nameErr := os.Hostname()
 	if nameErr != nil {

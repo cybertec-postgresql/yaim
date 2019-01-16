@@ -34,3 +34,48 @@ for
     refresh the TTL of all "marked" IP addresses that belong to this node
   }
 ```
+
+## configuration
+
+All configuration takes place in the yaim.yml file. pgbouncer_man by default looks for the yaim.yml file in the same directory as it's being launched from, however a custom config location can be provided using the config flag.
+
+### in yaim.yml
+#### service
+This is the namespace in which yaim operates. This must be different from the namespace used by your patroni cluster (and thus, also different from the namespace used in pgbouncer_man), to avoid conflicts.
+
+#### interval
+This is the main loop interval. After doing everything that is described in the design section, yaim will sleep for this amount of milliseconds.
+
+#### retry_num
+Number of times yaim will try to get values from the etcd key-value store or try to ping the pgbouncer or postgresql database.
+#### retry_after
+Time to wait before trying to reach etcd or the database again.
+
+#### etcd_endpoints
+A list of endpoints that can be used to access the same etcd cluster. The client will randomly try any of these endpoints.
+
+#### etcd_user and etcd_password
+Credentials to a user that may readingly access the contents within the `service` directory defined above.
+
+#### pgbouncer_*
+These settings are used to connect to the `pgbouncer` table that is provided by pgbouncer itself. These settings must point to the pgbouncer running on the same host as this yaim.
+
+#### db_options
+URL-style option notation for the connection that will be used to read from `pg_database`.
+
+
+## usage
+
+### adding IP addresses to the pool
+simply create a folder with the name containing the ip-address in the KV-store, for example with etcd:
+```
+curl -s --basic --user patroni:UpiU178oURwaK4RQ7Gw  http://192.168.0.34:2379/v2/keys/yaim_service/ips/123.0.0.1 -XPUT -d dir=true
+```
+yaim will then register that a new IP is available and it will try _mark_ it.
+
+### deleting addresses from the pool
+This is just as easy as adding addresses, simply remove the directory from etcd:
+
+```
+curl -s --basic --user patroni:UpiU178oURwaK4RQ7Gw  http://192.168.0.34:2379/v2/keys/yaim_service/ips/123.0.0.1?recursive=true -XDELETE
+```

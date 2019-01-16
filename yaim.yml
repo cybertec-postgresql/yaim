@@ -1,20 +1,21 @@
-# time (in milliseconds) after which pgbouncer_man wakes up and checks if any clusters or databases have changed.
+# time (in milliseconds) after which yaim wakes up and checks if it needs to register or release ip addresses.
 interval: 5000
 ttl: 7000
 
-#How often to retry reaching pgbouncer for the healthiness check and after how many milliseconds to retry again.
-retry_num: 3
+#how often etcd or sql connections should be retried and how long to wait between retries.
+retry_num: 2
 retry_after: 250
 
-# etcd or consul endpoint or list of endpoints.
+# the etcd or consul directory where the ip addresses will be registered, marked and the yaim node health will be advertised
+service: "/yaim_service/"
+
+# etcd endpoint or list of endpoints.
 endpoints:
   - http://127.0.0.1:2379
   - http://192.168.0.48:2379
 # username that can be used to access the key in etcd.
 etcd_user: "patroni"
 etcd_password: "UpiU178oURwaK4RQ7Gw"
-# the etcd or consul directory where the ip addresses will be registered, marked and the yaim node health will be advertised
-service: "/yaim_service/"
 
 # where postgres or pgbouncer can be reached. Must be on this host, as the virtual ip-addresses will be registered to this host.
 pgbouncer_address: 127.0.0.1

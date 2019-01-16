@@ -5,12 +5,10 @@ After=network-online.target
 [Service]
 Type=simple
 
-User=pgbouncer
-Group=pgbouncer
+User=postgres
+Group=postgres
 
-Config=/etc/yaim.yml
-
-ExecStart=/usr/local/bin/yaim -config $Config
+ExecStart=/usr/local/bin/yaim -config /etc/yaim.yml
 
 ExecStop=/bin/kill -s QUIT $MAINPID
 
