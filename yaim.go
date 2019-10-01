@@ -38,7 +38,7 @@ type conf struct {
 	Retry_after int `yaml:retry_after`
 	Retry_num   int `yaml:retry_num`
 
-	Endpoints     []string `yaml:enpoints`
+	Endpoints     []string `yaml:endpoints`
 	Etcd_user     string   `yaml:etcd_user`
 	Etcd_password string   `yaml:etcd_password`
 
