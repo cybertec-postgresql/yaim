@@ -1,6 +1,6 @@
 all: yaim
 
-yaim: *.go
+yaim: *.go */*.go
 	go build -ldflags="-s -w" .
 
 package: package-rpm package-deb
