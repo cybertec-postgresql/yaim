@@ -40,7 +40,7 @@ func (c *HttpChecker) Check() error {
 
 	c.result = string(body)
 
-	log.Debug("The http query returned: ", c.result)
+	log.Debug("The http health check query returned: ", c.result)
 
 	return nil
 }

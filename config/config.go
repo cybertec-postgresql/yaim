@@ -19,6 +19,7 @@ var versionString = "0.0.1"
 type Config struct {
 	Mask  int    `mapstructure:"netmask"`
 	Iface string `mapstructure:"interface"`
+	Label string `mapstructure:"label"`
 
 	HostingType string `mapstructure:"manager-type"`
 
@@ -28,6 +29,8 @@ type Config struct {
 	DcsEndpoints []string `mapstructure:"dcs-endpoints"`
 
 	DcsNamespace string `mapstructure:"dcs-namespace"`
+
+	DcsClusterName string `mapstructure:"dcs-clustername"`
 
 	CheckerType string `mapstructure:"checker-type"`
 
@@ -233,7 +236,7 @@ func NewConfig() (*Config, error) {
 	}
 
 	// set trigger-value to hostname if nothing is specified
-	if len(viper.GetString("trigger-value")) == 0 {
+	if len(viper.GetString("nodename")) == 0 {
 		nodename, err := os.Hostname()
 		if err != nil {
 			log.Printf("No nodename specified, hostname could not be retrieved: %s", err)

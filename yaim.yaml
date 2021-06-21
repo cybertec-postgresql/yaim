@@ -7,13 +7,14 @@ retry_num: 2
 retry_after: 250
 
 # the etcd or consul directory where the ip addresses will be registered, marked and the yaim node health will be advertised
-dcs-namespace: "/service/yaim/"
+dcs-namespace: "/service/"
+dcs-clustername: "yaim"
 
 # etcd endpoint or list of endpoints.
 dcs-type: etcd
 dcs-endpoints:
   - http://127.0.0.1:2379
-  - http://192.168.0.48:2379
+#  - http://192.168.0.48:2379
 # username that can be used to access the key in etcd.
 #etcd_user: "patroni"
 #etcd_password: "UpiU178oURwaK4RQ7Gw"
@@ -21,11 +22,13 @@ dcs-endpoints:
 # where postgres or pgbouncer can be reached. Must be on this host, as the virtual ip-addresses will be registered to this host.
 checker-type: http
 
-interface: eth0
+interface: lo
 netmask: 32
+label: yaim
+#label: yaim_managed_too_long
 
 http-url: http://127.0.0.1:2379/v2/keys/test
 http-expected-code: 200
-http-expected-response-contains: '"value":"heyeyeya"'
+http-expected-response-contains: '"value":"foo"'
 
 log-level: Debug

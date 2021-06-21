@@ -12,11 +12,13 @@ var ErrUnsupporteDCSType = errors.New("given endpoint type not supported")
 // LeaderChecker is the interface for checking leadership
 type Dcs interface {
 	AdvertiseInDCS()
+	CheckIpInDCS(ip string) bool
 	MarkIpInDCS(ip string) (success bool)
 	RefreshMarkIpInDCS(ip string)
 	UnMarkIpInDCS(ip string)
+	UnMarkAllIPs(ips []string)
 	GetNumberAdvertisments() (num int, err error)
-	GetNumberMarkedIPs() (numIps int, ownMarkedIPs, unmarkedIPs []string, err error)
+	GetIPs() (IPs, ownMarkedIPs, unmarkedIPs []string, err error)
 }
 
 // NewLeaderChecker returns a new LeaderChecker instance depending on the configuration

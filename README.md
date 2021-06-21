@@ -37,39 +37,57 @@ for
 
 ## configuration
 
-All configuration takes place in the yaim.yml file. pgbouncer_man by default looks for the yaim.yml file in the same directory as it's being launched from, however a custom config location can be provided using the config flag.
+All configuration takes place in the `yaim.yml` file. `yaim` by default looks for the `yaim.yml` file in the same directory as it's being launched from, however a custom config location can be provided using the config flag.
 
 ### in yaim.yml
-#### service
-This is the namespace in which yaim operates. This must be different from the namespace used by your patroni cluster (and thus, also different from the namespace used in pgbouncer_man), to avoid conflicts.
+#### dcs-namespace
+This is the namespace in the DCS in which all yaim clusters operate.
+> This should be different from the namespace used by other applications to avoid conflicts.
+
+### dcs-clustername
+This is the directory in which this specific yaim cluster operates. This will be placed inside of the dcs-namespace directory.
 
 #### interval
-This is the main loop interval. After doing everything that is described in the design section, yaim will sleep for this amount of milliseconds.
+This is the main loop interval. After doing everything that is described in the design section, yaim will sleep for this many milliseconds.
+
+#### ttl
+The TTL that will be set for various keys. If the key expires, a failover would occur.
 
 #### retry_num
 Number of times yaim will try to get values from the etcd key-value store or try to ping the pgbouncer or postgresql database.
 #### retry_after
 Time to wait before trying to reach etcd or the database again.
 
-#### etcd_endpoints
-A list of endpoints that can be used to access the same etcd cluster. The client will randomly try any of these endpoints.
+#### dcs-type
+The type of DCS used, currently only supports `etcd`
+
+#### dcs-endpoints
+A list of endpoints that can be used to access the same DCS cluster. The client will randomly try any of these endpoints.
 
 #### etcd_user and etcd_password
-Credentials to a user that may readingly access the contents within the `service` directory defined above.
+Credentials to a user that may read and write within the dcs-namespace/dcs-clustername directory defined above.
 
-#### pgbouncer_*
-These settings are used to connect to the `pgbouncer` table that is provided by pgbouncer itself. These settings must point to the pgbouncer running on the same host as this yaim.
+#### checker-type: http
+What kind of checker to use to evaluate healthiness.
+Currently supports `http`.
+Thinking of adding checkers for (PostgreSQL) databases and for running checks on the shell.
 
-#### db_options
-URL-style option notation for the connection that will be used to read from `pg_database`.
+#### http-url
+The URL to send the health check (GET request) to.
+
+#### http-expected-code
+What HTTP code implies healthiness? e.g. `200`
+
+#### http-expected-response-contains
+e.g. `'"value":"foo"'`
 
 
 ## usage
 
 ### adding IP addresses to the pool
-simply create a folder with the name containing the ip-address in the KV-store, for example with etcd:
+simply create a directory with the name of the directory containing the ip-address in the KV-store, for example with etcd:
 ```
-curl -s --basic --user patroni:UpiU178oURwaK4RQ7Gw  http://192.168.0.34:2379/v2/keys/yaim_service/ips/123.0.0.1 -XPUT -d dir=true
+curl -s http://192.168.0.34:2379/v2/keys/service/yaim/ips/123.0.0.1 -XPUT -d dir=true
 ```
 yaim will then register that a new IP is available and it will try _mark_ it.
 
@@ -77,5 +95,5 @@ yaim will then register that a new IP is available and it will try _mark_ it.
 This is just as easy as adding addresses, simply remove the directory from etcd:
 
 ```
-curl -s --basic --user patroni:UpiU178oURwaK4RQ7Gw  http://192.168.0.34:2379/v2/keys/yaim_service/ips/123.0.0.1?recursive=true -XDELETE
+curl -s http://192.168.0.34:2379/v2/keys/service/yaim/ips/123.0.0.1?recursive=true -XDELETE
 ```
