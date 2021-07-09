@@ -25,7 +25,6 @@ checker-type: http
 interface: lo
 netmask: 32
 label: yaim
-#label: yaim_managed_too_long
 
 http-url: http://127.0.0.1:2379/v2/keys/test
 http-expected-code: 200

@@ -1,11 +1,19 @@
 # yaim
 yaim - yet another ip manager
-yaim will check the healthiness of a specific postgresql or pgbouncer server. If the node is healthy, this information is published in etcd and all yaim registered in the same service directory will race to take on virtual IP addresses. All IP addresses specified in etcd will always lead to one of the nodes, so this concept can be easily used together with round robin DNS load balancing.
+yaim will check the healthiness of a component (e.g. via http GET, PostgreSQL query, shell).
+If the node is healthy, this information is published in a DCS (distributed consensus store) and all yaim registered in the same service directory will race to take on virtual IP addresses.
+All IP addresses specified in the DCS will always be connected to one of the nodes, so this concept can be easily used together with round robin DNS load balancing.
+If the health check fails or the node goes down, the remaining nodes will shortly afterwards try to take over the unused IP addresses.
+
+yaim can be used as a replacement for keepalived or other virtual IP management solutions.
+It can provide high availability and redundancy on a network level and as such doesn't require any special client or server modifications.
 
 ## design
 A running instance of this program will be referred to as a _node_.
 In the DCS, the IP adresses must be added as keys in the `service/ips/` path.
 Each IP address will be represented by a directory in DCS with the IP as the directory name. 
+
+> The design of yaim is inspired by Patroni and vip-manager, so if you know either of those, yaim should seem familiar.
 
 The program runs in a loop:
 ```

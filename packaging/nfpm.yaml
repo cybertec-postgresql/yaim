@@ -10,19 +10,27 @@ provides:
 maintainer: "Julian Markwort <julian.markwort@cybertec.at>"
 description: |
   yaim - yet another ip manager
-   yaim will check the healthiness of a specific postgresql
-   or pgbouncer server. If the node is healthy, this information
-   is published in etcd and all yaim registered in the same
-   service directory will race to take on virtual IP addresses.
-   All IP addresses specified in etcd will always lead to one of
-   the nodes, so this concept can be easily used together with
-   round robin DNS load balancing.
-vendor: "Cybertec"
-homepage: "http://www.cybertec.at/"
+
+  yaim will check the healthiness of a component (e.g. via http GET, PostgreSQL query, shell).
+  If the node is healthy, this information is published in a DCS (distributed consensus store)
+  and all yaim registered in the same service directory will race to take on virtual IP addresses.
+  All IP addresses specified in the DCS will always be connected to one of the nodes,
+  so this concept can be easily used together with round robin DNS load balancing.
+  If the health check fails or the node goes down, the remaining nodes will shortly afterwards
+  try to take over the unused IP addresses.
+
+  yaim can be used as a replacement for keepalived or other virtual IP management solutions.
+  It can provide high availability and redundancy on a network level and as such doesn't require
+  any special client or server modifications.
+vendor: "CYBERTEC PostgreSQL International GmbH"
+homepage: "https://www.cybertec-postgresql.com"
 license: "BSD 3"
-bindir: "/usr/local/bin"
-files:
-  ./yaim: "/usr/local/bin/yaim"
-  ./yaim.service: "/lib/systemd/system/yaim.service"
-config_files:
-  ./yaim.yml: "/etc/yaim.yml"
+contents:
+  - src: yaim
+    dst: /usr/local/bin/yaim
+  - src: yaim.service
+    dst: /lib/systemd/system/yaim.service
+    type: config
+  - src: yaim.yaml
+    dst: /etc/yaim.yml
+    type: config
