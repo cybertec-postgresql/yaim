@@ -8,8 +8,8 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"github.com/coreos/etcd/client"
 	"github.com/cybertec-postgresql/yaim/config"
+	"go.etcd.io/etcd/client/v2"
 )
 
 type EtcdDcs struct {
@@ -179,7 +179,7 @@ func (d *EtcdDcs) GetNumberAdvertisments() (num int, err error) {
 		if resp.Node.Dir {
 			return len(resp.Node.Nodes), nil
 		} else {
-			err = errors.New("No advertisments of any nodes (including my own, apparently) where found.")
+			err = errors.New("no advertisments of any nodes (including my own, apparently) where found")
 		}
 	}
 	return -1, err
@@ -191,7 +191,7 @@ func (d *EtcdDcs) GetIPs() (IPs, ownMarkedIPs, unmarkedIPs []string, err error) 
 	if err != nil {
 		return nil, nil, nil, err
 	}
-	if resp.Node.Dir == false {
+	if !resp.Node.Dir {
 		err = errors.New("The \"" + d.basepath + "ips\" path was no directory!")
 		return nil, nil, nil, err
 	}
